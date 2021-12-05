@@ -1,22 +1,16 @@
-import { Box, Flex, Text } from "@chakra-ui/layout";
+import { useColorModeValue } from "@chakra-ui/color-mode";
+import { Flex } from "@chakra-ui/layout";
 import { useChat } from "../logic/useChat";
+import Message from "./Message";
 
 const Messages = () => {
   const { messages } = useChat();
 
-  const getDate = (messageDate: string | Date) => {
-    const date =
-      typeof messageDate === "string" ? new Date(messageDate) : messageDate;
-
-    const hour = date.getHours();
-    const minute = date.getMinutes();
-
-    return `${hour}:${minute}`;
-  };
+  const bgColor = useColorModeValue("gray.100", "gray.700");
 
   return (
     <Flex
-      bg="gray.700"
+      bg={bgColor}
       h="calc(100vh - 160px)"
       p={6}
       overflow="auto"
@@ -24,17 +18,7 @@ const Messages = () => {
       flexDir="column"
     >
       {messages.map((message, index) => (
-        <Flex key={index} justifyContent="space-between" mb={2}>
-          <Box>{message.message}</Box>
-          <Box textAlign="end">
-            <Text fontWeight="bold">
-              {message.user}
-            </Text>
-            <Text fontSize={12} color="gray.300">
-              {getDate(message.date)}
-            </Text>
-          </Box>
-        </Flex>
+        <Message message={message} key={index} />
       ))}
     </Flex>
   );

@@ -4,11 +4,11 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useRef,
   useCallback,
 } from "react";
 import { useParams } from "react-router";
-import { io, Socket } from "socket.io-client";
+import { ChatEvents } from "../../../data/chat";
+import ws from "../../../services/ws";
 
 interface ChatContextType {
   channel: string;
@@ -17,12 +17,16 @@ interface ChatContextType {
   sendMessage(message: string): void;
 }
 
-interface Message {
+export interface Message {
   user: string;
   channel: string;
   message: string;
   date: Date;
 }
+
+const cache = {
+  started: false,
+};
 
 const ChatContext = createContext({} as ChatContextType);
 
@@ -31,25 +35,11 @@ export const useChat = () => useContext(ChatContext);
 const ChatContextProvider: React.FC = ({ children }) => {
   const { channel = "", user = "" } = useParams();
   const [, setSocketId] = useState(null);
-  const socket = useRef<Socket>();
   const toast = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const start = useCallback(async () => {
-    const url = process.env.REACT_APP_API_URL;
-
-    if (!url)
-      return toast({
-        title: "Erro",
-        description: "Não foi configurado REACT_APP_API_URL!",
-        status: "error",
-      });
-
-    socket.current = io(url);
-
-    console.log(socket.current);
-
-    socket.current.on("me", (id) => {
+  const start = useCallback(() => {
+    ws.on(ChatEvents.Me, (id) => {
       toast({
         title: "Nova conexão",
         description: id,
@@ -58,21 +48,26 @@ const ChatContextProvider: React.FC = ({ children }) => {
       setSocketId(id);
     });
 
-    socket.current.on("@new-message", (message) => {
+    ws.on(ChatEvents.NewMessage, (message) => {
       setMessages((prev) => [...prev, message]);
     });
 
-    socket.current.on("@user-joined", (user) => {
+    ws.on(ChatEvents.UserJoined, (user) => {
       toast({ title: "Usuário entrou!", description: user });
     });
 
-    socket.current.emit("@join-channel", { channel, user });
+    ws.send(ChatEvents.JoinChannel, { channel, user });
+
+    return () => {
+      ws.clear(ChatEvents.Me);
+      ws.clear(ChatEvents.NewMessage);
+      ws.clear(ChatEvents.UserJoined);
+      ws.clear(ChatEvents.JoinChannel);
+    };
   }, [toast, channel, user]);
 
   const sendMessage = useCallback(
     (message: string) => {
-      if (!socket.current) return;
-
       const newMessage: Message = {
         user,
         channel,
@@ -80,16 +75,19 @@ const ChatContextProvider: React.FC = ({ children }) => {
         date: new Date(),
       };
 
-      socket.current.emit("@send-message", newMessage);
+      ws.send(ChatEvents.SendMessage, newMessage);
       setMessages((prev) => [...prev, newMessage]);
     },
     [user, channel]
   );
 
   useEffect(() => {
-    if (socket.current) return;
+    if (cache.started) return;
 
-    start();
+    const clear = start();
+    cache.started = true;
+
+    return () => clear();
   }, [start]);
 
   return (

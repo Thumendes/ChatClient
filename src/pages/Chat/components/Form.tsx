@@ -26,10 +26,11 @@ const Form = () => {
             onChange={onChange}
             value={input}
             variant="filled"
+            focusBorderColor="pink.500"
             placeholder="Digite uma mensagem..."
           />
           <InputRightElement>
-            <Button type="submit">
+            <Button colorScheme="pink" type="submit">
               <FiSend size={34} />
             </Button>
           </InputRightElement>
