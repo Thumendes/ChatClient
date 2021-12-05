@@ -30,19 +30,10 @@ export const useChat = () => useContext(ChatContext);
 
 const ChatContextProvider: React.FC = ({ children }) => {
   const { channel = "", user = "" } = useParams();
-  const [socketId, setSocketId] = useState(null);
+  const [, setSocketId] = useState(null);
   const socket = useRef<Socket>();
   const toast = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-
-  function getRandomColor() {
-    var letters = "0123456789ABCDEF";
-    var color = "#";
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
 
   const start = useCallback(async () => {
     const url = process.env.REACT_APP_API_URL;
@@ -96,8 +87,10 @@ const ChatContextProvider: React.FC = ({ children }) => {
   );
 
   useEffect(() => {
+    if (socket.current) return;
+
     start();
-  }, []);
+  }, [start]);
 
   return (
     <ChatContext.Provider value={{ channel, user, messages, sendMessage }}>
