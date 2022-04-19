@@ -55,7 +55,7 @@ const HomePage = () => {
             <Input
               onChange={onChange("user")}
               focusBorderColor="pink.500"
-              placeholder="Comedor de ..."
+              placeholder="Usuário"
             />
           </FormControl>
 
@@ -64,7 +64,7 @@ const HomePage = () => {
             <Input
               onChange={onChange("channel")}
               focusBorderColor="pink.500"
-              placeholder="Casa das tia..."
+              placeholder="Canal"
             />
             <FormHelperText>Deixe em branco para criar uma sala</FormHelperText>
           </FormControl>
